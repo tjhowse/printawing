@@ -54,9 +54,59 @@ module wing_2_1()
 	linear_extrude(height=height) scale([main_scale,main_scale,main_scale]) airfoil(af_1,af_2,af_3);
 	
 }
-rib_depth = 1.3;
-skin_depth = 1;
+
+rib_depth = 1;
+skin_depth = 0.5;
 $fn = 10;
+
+module wing_2_void()
+{
+	block_x = 70;
+	block_y = 20;
+	block_z = 20;
+	difference()
+	{
+		translate([-block_x/4,-block_y/2,0]) cube([block_x,block_y,block_z]);
+		wing_2_1();
+	}
+}
+
+module wing_2_void_sum(depth)
+{
+	intersection()
+	{
+		wing_2_1();
+		minkowski()
+		{
+			wing_2_void();
+			sphere(r=depth);
+		}
+	}			
+}
+
+module wing_2_ribs()
+{
+	intersection()
+	{
+		/*difference()
+		{
+			wing_2_void_sum(rib_depth+skin_depth);
+			wing_2_void_sum(skin_depth);
+		}*/
+		wing_2_void_sum(rib_depth+skin_depth);
+		rotate([0,0,90]) lattice();
+	}
+}
+
+render()
+{
+	union()
+	{
+		// Skin
+		wing_2_void_sum(skin_depth);
+		wing_2_ribs();
+	}
+}
 
 module wing_2_rib_shape()
 {	
@@ -116,15 +166,11 @@ module lattice()
 	}
 }
 
-module wing_3()
-{
-	
 
-}
-
+//wing_2_void();
 //lattice();
 
-render()
+/*render()
 {
 	wing_2();
-}
+}*/
