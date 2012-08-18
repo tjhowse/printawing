@@ -99,3 +99,5 @@ module wing()
 		wing_ribs();
 	}
 }
+
+wing();
