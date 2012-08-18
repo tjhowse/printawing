@@ -24,130 +24,54 @@ module airfoil(camber_max = 8, camber_position = 4, thickness = 12) {
 	] ); 
 }
 
-module wing_1()
-{
-	main_scale = 30;
-	wall_thickness = 1;
-	height = 20;
-	
-	af_1 = 6;
-	af_2 = 3;
-	af_3 = 13;
-
-	difference()
-	{
-		linear_extrude(height=height) scale([main_scale,main_scale,main_scale]) airfoil(af_1,af_2,af_3);
-		translate([wall_thickness/2,0,0]) linear_extrude(height=height) scale([main_scale-wall_thickness,main_scale,main_scale]) airfoil(af_1,af_2,af_3-2*wall_thickness);
-	}
-}
-
-module wing_2_1()
-{
-	main_scale = 50;
-	wall_thickness = 1;
-	height = 20;
-	
-	af_1 = 6;
-	af_2 = 3;
-	af_3 = 13;
-	
-	linear_extrude(height=height) scale([main_scale,main_scale,main_scale]) airfoil(af_1,af_2,af_3);
-	
-}
-
+chord_length = 50;
+height = 20;
 rib_depth = 1;
-skin_depth = 0.5;
+skin_depth = 1;
 $fn = 10;
 
-module wing_2_void()
+module wing_shape()
 {
-	block_x = 70;
+	af_1 = 6;
+	af_2 = 3;
+	af_3 = 13;
+	
+	linear_extrude(height=height) scale([chord_length,chord_length,chord_length]) airfoil(af_1,af_2,af_3);
+	
+}
+
+module wing_void()
+{
+	block_x = 70; // Manually tweak these until the wing object is entirely enclosed by the block, with at least one open end.
 	block_y = 20;
 	block_z = 20;
+	
 	difference()
 	{
 		translate([-block_x/4,-block_y/2,0]) cube([block_x,block_y,block_z]);
-		wing_2_1();
+		wing_shape();
 	}
 }
 
-module wing_2_void_sum(depth)
+module wing_void_sum(depth)
 {
 	intersection()
 	{
-		wing_2_1();
+		wing_shape();
 		minkowski()
 		{
-			wing_2_void();
+			wing_void();
 			sphere(r=depth);
 		}
 	}			
 }
 
-module wing_2_ribs()
+module wing_ribs()
 {
 	intersection()
 	{
-		/*difference()
-		{
-			wing_2_void_sum(rib_depth+skin_depth);
-			wing_2_void_sum(skin_depth);
-		}*/
-		wing_2_void_sum(rib_depth+skin_depth);
+		wing_void_sum(rib_depth+skin_depth);
 		rotate([0,0,90]) lattice();
-	}
-}
-
-render()
-{
-	union()
-	{
-		// Skin
-		wing_2_void_sum(skin_depth);
-		wing_2_ribs();
-	}
-}
-
-module wing_2_rib_shape()
-{	
-	minkowski()
-	{
-		wing_2_1();
-		sphere(r=rib_depth);
-	}
-}
-
-module wing_2_skin_shape()
-{	
-	minkowski()
-	{
-		wing_2_1();
-		sphere(r=skin_depth+rib_depth);
-	}
-}
-
-module wing_2()
-{
-	intersection()
-	{
-		union()
-		{
-			intersection()
-			{
-				difference()
-				{
-					wing_2_rib_shape();
-					wing_2_1();			
-				}
-				rotate([0,0,90]) lattice();
-			}
-			difference()
-			{
-				wing_2_skin_shape();
-				wing_2_rib_shape();
-			}
-		}
-		translate([-3,-50,0]) cube([100,100,10]);
 	}
 }
 
@@ -166,11 +90,12 @@ module lattice()
 	}
 }
 
-
-//wing_2_void();
-//lattice();
-
-/*render()
+module wing()
 {
-	wing_2();
-}*/
+	union()
+	{
+		// Skin
+		wing_void_sum(skin_depth);
+		wing_ribs();
+	}
+}
